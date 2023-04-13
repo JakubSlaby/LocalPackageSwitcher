@@ -1,0 +1,26 @@
+﻿{
+  "name": "com.jakubslaby.packagerepoeditor",
+  "displayName": "Package Repo Switcher",
+  "description": "Tool to allow for easy swapping between having a package imported in to the project and having a checked out repository to work on the code inside of the package.",
+  "author": "Jakub Slaby <jakubslaby@gmail.com>",
+  "tags": [],
+  "version": "0.1.0",
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/JakubSlaby/Shared-PackageRepoEditor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JakubSlaby/Shared-PackageRepoEditor/issues"
+  },
+  "directories": {
+    "editor": "./Editor"
+  },
+  "keywords": [
+    "utility",
+    "editor",
+    "package",
+    "unity"
+  ],
+  "license": "MIT"
+}
