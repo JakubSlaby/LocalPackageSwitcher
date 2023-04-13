@@ -19,8 +19,15 @@ namespace WhiteSparrow.PackageRepoEditor
 			changeCheck.Start();
 			changeCheck.WaitTillExit();
 
+			if (changeCheck.ExitCode != 0)
+			{
+				CompleteError(changeCheck.Error);
+				return;
+			}
+
 			HasUncommittedChanges = !changeCheck.Output.Contains("nothing to commit, working tree clean");
 			HasCommitsToPush = changeCheck.Output.Contains("use \"git push\"");
+			Complete();
 		}
 	}
 }
