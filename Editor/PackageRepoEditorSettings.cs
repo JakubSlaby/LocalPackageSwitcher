@@ -7,7 +7,7 @@ namespace WhiteSparrow.PackageRepoEditor
 	[FilePath("ProjectSettings/PackageRepoEditorSettings.asset", FilePathAttribute.Location.ProjectFolder)]
 	public class PackageRepoEditorSettings : ScriptableSingleton<PackageRepoEditorSettings>
 	{
-		public string RepositoriesPath;
+		public string RepositoriesPath = "Plugins/Repositories";
 		
 		private void OnEnable()
 		{

@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
+using Plugins.Repositories.Shared_PackageRepoEditor.Editor.Requests;
 using UnityEditor;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
-using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace WhiteSparrow.PackageRepoEditor
 {
@@ -15,6 +11,7 @@ namespace WhiteSparrow.PackageRepoEditor
 		// ReSharper disable once InconsistentNaming
 		// ReSharper disable once MemberCanBePrivate.Global
 		public new PackageRepoEditorSettings target => base.target as PackageRepoEditorSettings;
+		private static RepositoryDirectoryValidationRequest s_DirectoryCheckRequest;
 		
 		public override void OnInspectorGUI()
 		{
@@ -25,12 +22,59 @@ namespace WhiteSparrow.PackageRepoEditor
 					target.Save();
 			}
 
+			if (string.IsNullOrWhiteSpace(target.RepositoriesPath))
+				return;
+
+			if (!EditorGUIUtility.editingTextField && (s_DirectoryCheckRequest == null || s_DirectoryCheckRequest.DirectoryPath != target.RepositoriesPath))
+			{
+				OnRequestCompleted();
+				s_DirectoryCheckRequest = new RepositoryDirectoryValidationRequest(target.RepositoriesPath, GetRepositoryDirectory());
+				s_DirectoryCheckRequest.Start();
+			}
+
+			if (!s_DirectoryCheckRequest.IsComplete)
+			{
+				EditorGUILayout.HelpBox($"Verifying destination directory {target.RepositoriesPath}...", MessageType.Info, true);
+				return;
+			}
+			else if (s_DirectoryCheckRequest.Result != RepositoryDirectoryValidationRequest.ValidationResult.Success)
+			{
+				EditorGUILayout.HelpBox(s_DirectoryCheckRequest.Error, MessageType.Error, true);
+				switch (s_DirectoryCheckRequest.Result)
+				{
+					case RepositoryDirectoryValidationRequest.ValidationResult.DirectoryDoesntExist:
+						{
+							if (GUILayout.Button("Create target directory"))
+							{
+								Directory.CreateDirectory(GetRepositoryDirectory().FullName);
+								s_DirectoryCheckRequest = null;
+								Repaint();
+								return;
+							}
+						}
+						break;
+					case RepositoryDirectoryValidationRequest.ValidationResult.NoValidGitIgnore:
+						{
+							if (GUILayout.Button("Update .gitignore for repositories directory."))
+							{
+								GitIgnoreUpdateRequest request = new GitIgnoreUpdateRequest(GetRepositoryDirectory());
+								request.Start();
+								request.OnComplete += OnRequestCompleted;
+							}
+						}
+						break;
+				}
+				
+				
+			}
+
 			GUILayout.Space(20);
 			RepositoryListGUI();
 			GUILayout.Space(20);
 			PackageListGUI();
 
 		}
+
 
 		private static FetchRepositoriesRequest s_RepositoryFetchRequest;
 		private static ConvertToPackageRequest s_RepositoryConvertRequest;
@@ -166,6 +210,9 @@ namespace WhiteSparrow.PackageRepoEditor
 			s_RepositoryConvertRequest = null;
 			s_PackageConvertRequest = null;
 			s_PackageListRequest = null;
+			s_DirectoryCheckRequest = null;
+			
+			Repaint();
 		}
 
 		private void OnEditorUpdate()
