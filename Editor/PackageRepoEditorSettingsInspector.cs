@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -24,9 +25,6 @@ namespace WhiteSparrow.PackageRepoEditor
 					target.Save();
 			}
 
-			EditorGUILayout.TextField(Application.persistentDataPath);
-			EditorGUILayout.TextField(Application.dataPath);
-			
 			GUILayout.Space(20);
 			RepositoryListGUI();
 			GUILayout.Space(20);
@@ -34,106 +32,140 @@ namespace WhiteSparrow.PackageRepoEditor
 
 		}
 
-		private static FetchRepositoriesRequest s_RepositoryFetchProcess;
+		private static FetchRepositoriesRequest s_RepositoryFetchRequest;
 		private static ConvertToPackageRequest s_RepositoryConvertRequest;
 		private void RepositoryListGUI()
 		{
-			if (s_RepositoryFetchProcess == null)
+			using (new EditorGUILayout.HorizontalScope())
 			{
-				
-				
-				s_RepositoryFetchProcess = new FetchRepositoriesRequest(GetRepositoryDirectory());
-				s_RepositoryFetchProcess.Start();
+				GUILayout.Label("Repositories", EditorStyles.whiteLargeLabel);
+				GUILayout.FlexibleSpace();
+				using (new EditorGUI.DisabledScope(s_RepositoryFetchRequest == null || !s_RepositoryFetchRequest.IsComplete))
+				{
+					if (GUILayout.Button("Refresh"))
+					{
+						s_RepositoryFetchRequest = null;
+						Repaint();
+						return;
+					}
+				}
+			}
+			
+			if (s_RepositoryFetchRequest == null)
+			{
+				s_RepositoryFetchRequest = new FetchRepositoriesRequest(GetRepositoryDirectory());
+				s_RepositoryFetchRequest.Start();
 			}
 
-			if (!s_RepositoryFetchProcess.IsComplete)
+			if (!s_RepositoryFetchRequest.IsComplete)
 			{
 				EditorGUILayout.HelpBox("... fetching repositories", MessageType.Info, true);
 				return;
 			}
 
-			if (GUILayout.Button("Try again"))
+			if (!string.IsNullOrWhiteSpace(s_RepositoryFetchRequest.Error))
 			{
-				s_RepositoryFetchProcess = null;
-				Repaint();
+				EditorGUILayout.HelpBox(s_RepositoryFetchRequest.Error, MessageType.Error, true);
+				return;
+			}
+
+			if (s_RepositoryFetchRequest.Result == null || s_RepositoryFetchRequest.Result.Length == 0)
+			{
+				GUILayout.Label("No package repositories");
 				return;
 			}
 			
-			if(!string.IsNullOrWhiteSpace(s_RepositoryFetchProcess.Output))
-				EditorGUILayout.HelpBox(s_RepositoryFetchProcess.Output, MessageType.Info, true);
-			if(!string.IsNullOrWhiteSpace(s_RepositoryFetchProcess.Error))
-				EditorGUILayout.HelpBox(s_RepositoryFetchProcess.Error, MessageType.Error, true);
-
-			foreach (var repositoryDirectory in s_RepositoryFetchProcess.Result)
+			foreach (var record in s_RepositoryFetchRequest.Result)
 			{
 				using (new EditorGUILayout.HorizontalScope())
 				{
-					GUILayout.Label(repositoryDirectory.FullName);
+					GUILayout.Label(record.RelativeUri);
+					GUILayout.FlexibleSpace();
+					if(record.HasUncommittedChanges)
+						GUILayout.Label("uncommitted changes");
+					if(record.HasChangesToPush)
+						GUILayout.Label("changes to push");
+						
 					if (GUILayout.Button("Convert to package"))
 					{
-						ConvertRepositoryToPackage(repositoryDirectory);
+						s_RepositoryConvertRequest = new ConvertToPackageRequest(record.Directory);
+						s_RepositoryConvertRequest.Start();
+						s_RepositoryConvertRequest.OnComplete += OnRequestCompleted;
 					}
 				}
 			}
 		}
 
-		private void ConvertRepositoryToPackage(DirectoryInfo repositoryDirectory)
-		{
-			s_RepositoryConvertRequest = new ConvertToPackageRequest(repositoryDirectory);
-			s_RepositoryConvertRequest.Start();
-			s_RepositoryConvertRequest.OnComplete += OnRepositoryConvertCompleted;
-		}
 
-		private void OnRepositoryConvertCompleted()
-		{
-			
-		}
-
-		private static ListRequest s_RequestList;
+		private static FetchPackagesRequest s_PackageListRequest;
 		private static ConvertToRepositoryRequest s_PackageConvertRequest; 
 		
 		private void PackageListGUI()
 		{
-			if (s_RequestList == null)
+			using (new EditorGUILayout.HorizontalScope())
 			{
-				s_RequestList = Client.List();
-				EditorApplication.update += OnEditorUpdate;
+				GUILayout.Label("Packages", EditorStyles.whiteLargeLabel);
+				GUILayout.FlexibleSpace();
+				using (new EditorGUI.DisabledScope(s_PackageListRequest == null || !s_PackageListRequest.IsComplete))
+				{
+					if (GUILayout.Button("Refresh"))
+					{
+						s_PackageListRequest = null;
+						Repaint();
+						return;
+					}
+				}
 			}
-
-			if (s_RequestList.Status == StatusCode.InProgress)
+			
+			if (s_PackageListRequest == null)
+			{
+				s_PackageListRequest = new FetchPackagesRequest();
+				s_PackageListRequest.Start();
+			}
+			
+			if (!s_PackageListRequest.IsComplete)
 			{
 				EditorGUILayout.HelpBox("... fetching packages", MessageType.Info, true);
 				return;
 			}
 
-			if (GUILayout.Button("Refresh"))
+			if (s_PackageListRequest.Error != null)
 			{
-				s_RequestList = null;
-				Repaint();
+				EditorGUILayout.HelpBox(s_PackageListRequest.Error, MessageType.Error, true);
 				return;
 			}
-			
-			foreach (var packageInfo in s_RequestList.Result)
+
+			if (s_PackageListRequest.Result == null || s_PackageListRequest.Result.Length == 0)
+			{
+				GUILayout.Label("No custom packages");
+				return;
+			}
+
+			foreach (var packageInfo in s_PackageListRequest.Result)
 			{
 				using (new EditorGUILayout.HorizontalScope())
 				{
-					if (packageInfo.packageId.StartsWith("com.unity", StringComparison.OrdinalIgnoreCase))
-						continue;
 					GUILayout.Label(packageInfo.displayName);
 					GUILayout.FlexibleSpace();
 					GUILayout.Label(packageInfo.packageId);
 					if (packageInfo.repository != null && packageInfo.repository.type == "git" && GUILayout.Button("Convert to repository"))
 					{
-						ConvertToRepository(packageInfo);
+						s_PackageConvertRequest = new ConvertToRepositoryRequest(packageInfo, GetRepositoryDirectory());
+						s_PackageConvertRequest.Start();
+						s_PackageConvertRequest.OnComplete += OnRequestCompleted;
 					}
 				}
 			}
 		}
+		
+		
 
-		private void ConvertToRepository(PackageInfo packageInfo)
+		private void OnRequestCompleted()
 		{
-			s_PackageConvertRequest = new ConvertToRepositoryRequest(packageInfo, GetRepositoryDirectory());
-			s_PackageConvertRequest.Start();
+			s_RepositoryFetchRequest = null;
+			s_RepositoryConvertRequest = null;
+			s_PackageConvertRequest = null;
+			s_PackageListRequest = null;
 		}
 
 		private void OnEditorUpdate()

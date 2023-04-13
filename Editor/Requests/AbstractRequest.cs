@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace WhiteSparrow.PackageRepoEditor
 {
@@ -39,6 +40,9 @@ namespace WhiteSparrow.PackageRepoEditor
 		
 		protected void Complete()
 		{
+			if (m_IsComplete)
+				return;
+			
 			m_IsComplete = true;
 			m_OnComplete?.Invoke();
 			m_OnComplete = null;
@@ -47,6 +51,7 @@ namespace WhiteSparrow.PackageRepoEditor
 		protected void CompleteError(string error)
 		{
 			Error = error;
+			Debug.LogError(Error);
 			Complete();
 		}
 	}
