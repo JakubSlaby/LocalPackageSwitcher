@@ -39,11 +39,10 @@ namespace WhiteSparrow.PackageRepoEditor
 			changeCheck.Start();
 			if (changeCheck.HasUncommittedChanges || changeCheck.HasCommitsToPush)
 			{
-				if(EditorUtility.DisplayDialog("Changes in repo", $"Repository {RepositoryDirectory.Name} has changes.\nUncommitted changes: {changeCheck.HasUncommittedChanges}\nChanges to push: {changeCheck.HasCommitsToPush}", "Abort", "Discard all changes"))
+				if(!EditorUtility.DisplayDialog("Changes in repo", $"Repository {RepositoryDirectory.Name} has changes.\nUncommitted changes: {changeCheck.HasUncommittedChanges}\nChanges to push: {changeCheck.HasCommitsToPush}", "Discard all changes", "Abort"))
 					return;
 
-				if (EditorUtility.DisplayDialog("Changes in repo", "Are you sure you want to discard all changes?", "No, abort",
-						"Yes, Discard all changes"))
+				if (!EditorUtility.DisplayDialog("Changes in repo", "Are you sure you want to discard all changes?","Yes, Discard all changes", "No, abort"))
 					return;
 			}
 			
