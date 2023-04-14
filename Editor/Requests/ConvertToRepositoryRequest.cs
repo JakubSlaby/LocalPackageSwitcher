@@ -33,14 +33,22 @@ namespace WhiteSparrow.PackageRepoEditor
 			}
 
 			string url = null;
-			if (PackageInfo.packageId.Contains("git://"))
+			if (PackageInfo.packageId.Contains("@https://") || PackageInfo.packageId.Contains("@git://"))
 			{
-				url = PackageInfo.packageId.Substring(PackageInfo.packageId.LastIndexOf("@", StringComparison.InvariantCulture));
-				url = "https://" + url.Substring("git://".Length);
+				url = PackageInfo.packageId.Substring(PackageInfo.packageId.LastIndexOf("@", StringComparison.InvariantCulture) + 1);
+				if(url.StartsWith("git://"))
+					url = "https://" + url.Substring("git://".Length);
+			}
+
+
+			if (string.IsNullOrWhiteSpace(url))
+			{
+				if (PackageInfo.repository.url.StartsWith("git://"))
+					url = "https://" + PackageInfo.repository.url.Substring("git://".Length);
+				else
+					url = PackageInfo.repository.url;
 			}
 			
-			if (string.IsNullOrWhiteSpace(url) && PackageInfo.repository.url.StartsWith("git://"))
-				url = "https://" + PackageInfo.repository.url.Substring("git://".Length);
 			if (string.IsNullOrWhiteSpace(url))
 			{
 				CompleteError("No repository URL found");
