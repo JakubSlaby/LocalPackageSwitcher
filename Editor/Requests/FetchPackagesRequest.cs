@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
 
 namespace WhiteSparrow.PackageRepoEditor
 {
@@ -10,10 +11,11 @@ namespace WhiteSparrow.PackageRepoEditor
 		
 		protected override void StartRequest()
 		{
-			var request = Client.List();
-			while (!request.IsCompleted)
-				continue;
+			PackageManagerRequest.Wrap(Client.List(), OnListRequestCompleted);
+		}
 
+		private void OnListRequestCompleted(ListRequest request)
+		{
 			if (request.Error != null)
 			{
 				CompleteError(request.Error.message);

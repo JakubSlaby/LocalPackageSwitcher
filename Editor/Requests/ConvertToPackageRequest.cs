@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -16,9 +15,6 @@ namespace WhiteSparrow.PackageRepoEditor
 		{
 			RepositoryDirectory = repositoryDirectory;
 		}
-
-		private Timer m_Ticker;
-		private AddRequest m_AddPackageRequest;
 
 		protected override void StartRequest()
 		{
@@ -58,13 +54,14 @@ namespace WhiteSparrow.PackageRepoEditor
 				return;
 			}
 
-			m_AddPackageRequest = Client.Add(gitUrlProcess.Output.Trim());
-			while (!m_AddPackageRequest.IsCompleted)
-				continue;
+			PackageManagerRequest.Wrap(Client.Add(gitUrlProcess.Output.Trim()), OnPackageAddComplete);
+		}
 
-			if (m_AddPackageRequest.Error != null)
+		private void OnPackageAddComplete(AddRequest addPackageRequest)
+		{
+			if (addPackageRequest.Error != null)
 			{
-				CompleteError(m_AddPackageRequest.Error.message);
+				CompleteError(addPackageRequest.Error.message);
 				return;
 			}
 

@@ -244,14 +244,7 @@ namespace WhiteSparrow.PackageRepoEditor
 		[SettingsProvider]
 		static SettingsProvider CreateSettingsProvider()
 		{
-			return AssetSettingsProvider.CreateProviderFromObject("Project/WhiteSparrow/Package Repo Switcher", PackageRepoEditorSettings.instance);
-		}
-		
-		// Example of how to prompt the settings window
-		[MenuItem("Tools/Package Repository Switcher")]
-		internal static void ShowWindow()
-		{
-			SettingsService.OpenProjectSettings("Project/WhiteSparrow/Package Repo Switcher");
+			return AssetSettingsProvider.CreateProviderFromObject("Project/White Sparrow/Package Repo Switcher", PackageRepoEditorSettings.instance);
 		}
 	}
 }

@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEditor;
 using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
@@ -20,20 +22,31 @@ namespace WhiteSparrow.PackageRepoEditor
 		{
 			if (!RepositoryDirectory.Exists)
 			{
-				Complete();
+				CompleteError($"Target repository director {RepositoryDirectory.FullName} doesn't exist.");
 				return;
 			}
 
 			if (PackageInfo.repository == null || string.IsNullOrWhiteSpace(PackageInfo.repository.url) || PackageInfo.repository.type != "git")
 			{
-				Complete();
+				CompleteError("No repository defined");
 				return;
 			}
 
-			string url = PackageInfo.repository.url;
-			if (url.StartsWith("git://"))
+			string url = null;
+			if (PackageInfo.packageId.Contains("git://"))
+			{
+				url = PackageInfo.packageId.Substring(PackageInfo.packageId.LastIndexOf("@", StringComparison.InvariantCulture));
 				url = "https://" + url.Substring("git://".Length);
-
+			}
+			
+			if (string.IsNullOrWhiteSpace(url) && PackageInfo.repository.url.StartsWith("git://"))
+				url = "https://" + PackageInfo.repository.url.Substring("git://".Length);
+			if (string.IsNullOrWhiteSpace(url))
+			{
+				CompleteError("No repository URL found");
+				return;
+			}
+			
 			string repositoryName = url.Substring(url.LastIndexOf('/') + 1);
 			repositoryName = repositoryName.Substring(0, repositoryName.LastIndexOf('.'));
 
@@ -61,12 +74,11 @@ namespace WhiteSparrow.PackageRepoEditor
 				return;
 			}
 			
-			
-			var removeRequest = Client.Remove(PackageInfo.name);
-			while (!removeRequest.IsCompleted)
-				continue;
-			
-			
+			PackageManagerRequest.Wrap(Client.Remove(PackageInfo.name), OnPackageRemoveComplete);
+		}
+
+		private void OnPackageRemoveComplete(RemoveRequest removeRequest)
+		{
 			if (removeRequest.Error != null)
 				Debug.LogError(removeRequest.Error.message);
 			
