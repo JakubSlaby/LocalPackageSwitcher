@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Plugins.Repositories.Shared_PackageRepoEditor.Editor.Requests;
 using UnityEditor;
 using UnityEngine;
@@ -12,7 +13,15 @@ namespace WhiteSparrow.PackageRepoEditor
 		// ReSharper disable once MemberCanBePrivate.Global
 		public new PackageRepoEditorSettings target => base.target as PackageRepoEditorSettings;
 		private static RepositoryDirectoryValidationRequest s_DirectoryCheckRequest;
-		
+
+		private void OnEnable()
+		{
+			if (target.hideFlags.HasFlag(HideFlags.NotEditable))
+			{
+				target.hideFlags ^= HideFlags.NotEditable;
+			}
+		}
+
 		public override void OnInspectorGUI()
 		{
 			using (var check = new EditorGUI.ChangeCheckScope())
