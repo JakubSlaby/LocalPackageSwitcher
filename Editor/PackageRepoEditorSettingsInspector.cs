@@ -41,40 +41,41 @@ namespace WhiteSparrow.PackageRepoEditor
 				s_DirectoryCheckRequest.Start();
 			}
 
-			if (!s_DirectoryCheckRequest.IsComplete)
+			if (s_DirectoryCheckRequest != null)
 			{
-				EditorGUILayout.HelpBox($"Verifying destination directory {target.RepositoriesPath}...", MessageType.Info, true);
-				return;
-			}
-			else if (s_DirectoryCheckRequest.Result != RepositoryDirectoryValidationRequest.ValidationResult.Success)
-			{
-				EditorGUILayout.HelpBox(s_DirectoryCheckRequest.Error, MessageType.Error, true);
-				switch (s_DirectoryCheckRequest.Result)
+				if (!s_DirectoryCheckRequest.IsComplete)
 				{
-					case RepositoryDirectoryValidationRequest.ValidationResult.DirectoryDoesntExist:
-						{
-							if (GUILayout.Button("Create target directory"))
-							{
-								Directory.CreateDirectory(GetRepositoryDirectory().FullName);
-								s_DirectoryCheckRequest = null;
-								Repaint();
-								return;
-							}
-						}
-						break;
-					case RepositoryDirectoryValidationRequest.ValidationResult.NoValidGitIgnore:
-						{
-							if (GUILayout.Button("Update .gitignore for repositories directory."))
-							{
-								GitIgnoreUpdateRequest request = new GitIgnoreUpdateRequest(GetRepositoryDirectory());
-								request.Start();
-								request.OnComplete += OnRequestCompleted;
-							}
-						}
-						break;
+					EditorGUILayout.HelpBox($"Verifying destination directory {target.RepositoriesPath}...", MessageType.Info, true);
+					return;
 				}
-				
-				
+				else if (s_DirectoryCheckRequest.Result != RepositoryDirectoryValidationRequest.ValidationResult.Success)
+				{
+					EditorGUILayout.HelpBox(s_DirectoryCheckRequest.Error, MessageType.Error, true);
+					switch (s_DirectoryCheckRequest.Result)
+					{
+						case RepositoryDirectoryValidationRequest.ValidationResult.DirectoryDoesntExist:
+							{
+								if (GUILayout.Button("Create target directory"))
+								{
+									Directory.CreateDirectory(GetRepositoryDirectory().FullName);
+									s_DirectoryCheckRequest = null;
+									Repaint();
+									return;
+								}
+							}
+							break;
+						case RepositoryDirectoryValidationRequest.ValidationResult.NoValidGitIgnore:
+							{
+								if (GUILayout.Button("Update .gitignore for repositories directory."))
+								{
+									GitIgnoreUpdateRequest request = new GitIgnoreUpdateRequest(GetRepositoryDirectory());
+									request.Start();
+									request.OnComplete += OnRequestCompleted;
+								}
+							}
+							break;
+					}
+				}
 			}
 
 			GUILayout.Space(20);
