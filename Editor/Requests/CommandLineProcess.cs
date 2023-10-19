@@ -65,12 +65,17 @@ namespace WhiteSparrow.PackageRepoEditor
 			string fileName = null;
 			switch (file)
 			{
-				#if UNITY_STANDALONE_WIN
+				#if UNITY_EDITOR_WIN
 				case ProcessFile.GIT: fileName = "git.exe";
-				#elif UNITY_STANDALONE_OSX
-				case ProcessFile.GIT: fileName = "git";
-				#endif
 					break;
+				#elif UNITY_EDITOR_OSX
+				case ProcessFile.GIT: fileName = "git";
+					break;
+				#else
+				default:
+					break;
+				#endif
+				
 			}
 			
 			Init(fileName, command, workingDirectory);
