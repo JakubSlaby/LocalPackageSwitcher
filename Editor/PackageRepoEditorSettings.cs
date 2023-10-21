@@ -1,6 +1,4 @@
-﻿using System;
-using UnityEditor;
-using UnityEngine;
+﻿using UnityEditor;
 
 namespace WhiteSparrow.PackageRepoEditor
 {
@@ -9,11 +7,6 @@ namespace WhiteSparrow.PackageRepoEditor
 	{
 		public string RepositoriesPath = "Plugins/Repositories";
 		
-		private void OnEnable()
-		{
-			this.hideFlags = HideFlags.DontSave;
-		}
-
 		internal void Save()
 		{
 			this.Save(true);
