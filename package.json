@@ -5,7 +5,9 @@
   "author": "Jakub Slaby <jakubslaby@gmail.com>",
   "tags": [],
   "version": "0.1.0",
-  "dependencies": {},
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json" : "3.2.1"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/JakubSlaby/Shared-PackageRepoEditor.git"

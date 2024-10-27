@@ -1,0 +1,49 @@
+﻿.package-switcher-window
+{
+	
+}
+
+.package-switcher-window .scroll-content-container
+{
+	padding: 10px;
+}
+
+.package-list-container
+{
+	
+}
+
+.package-list-container Label.title
+{
+	font-size: var(--unity-metrics-default-font_big_size);
+	-unity-font-style: bold;
+	margin-bottom: 8px;
+}
+.package-list-container .content
+{
+	padding-left: 10px;
+}
+
+.package-information-item
+{
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 6px;
+}
+.package-information-item .title-container
+{
+	flex-grow: 1;
+	flex-shrink: 0;
+}
+
+.package-information-item .meta-data-container
+{
+	flex-shrink: 1;
+	overflow: hidden;
+	align-items: flex-end;
+	margin-left: 10px
+}
+.package-information-item .actions-container
+{
+	flex-shrink: 0;
+}
