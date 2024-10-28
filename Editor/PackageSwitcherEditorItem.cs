@@ -12,6 +12,7 @@ namespace WhiteSparrow.PackageRepoEditor
     public class AbstractPackageSwitcherEditorItem : VisualElement
     {
         public Label PackageDisplayName { get; private set; }
+        public Label PackageVersion { get; private set; }
         public Label PackageName { get; private set; }
         public Label PackagePath { get; private set; }
         
@@ -24,14 +25,23 @@ namespace WhiteSparrow.PackageRepoEditor
         public AbstractPackageSwitcherEditorItem()
         {
             this.AddToClassList("package-information-item");
+
+            var primaryRow = new VisualElement();
+            primaryRow.AddToClassList("primary-row");
+            primaryRow.AddManipulator(new Clickable(OnPrimaryRowClicked));
+            this.Add(primaryRow);
             
             TitleContainer = new VisualElement();
             TitleContainer.AddToClassList("title-container");
-            this.Add(TitleContainer);
+            primaryRow.Add(TitleContainer);
 
             PackageDisplayName = new Label();
             PackageDisplayName.AddToClassList("package-display-name");
             TitleContainer.Add(PackageDisplayName);
+            
+            PackageVersion =  new Label();
+            PackageVersion.AddToClassList("package-version");
+            TitleContainer.Add(PackageVersion);
 
             
             MetaDataContainer = new VisualElement();
@@ -48,13 +58,18 @@ namespace WhiteSparrow.PackageRepoEditor
 
             ActionsContainer = new VisualElement();
             ActionsContainer.AddToClassList("actions-container");
-            this.Add(ActionsContainer);
+            primaryRow.Add(ActionsContainer);
 
             GenericActionButton = new Button();
             GenericActionButton.text = "...";
             GenericActionButton.AddToClassList("actions-generic-button");
             GenericActionButton.clickable.clicked += OnGenericActionMenu;
             ActionsContainer.Add(GenericActionButton);
+        }
+
+        private void OnPrimaryRowClicked(EventBase obj)
+        {
+            this.ToggleInClassList("toggle-active");
         }
 
         private void OnGenericActionMenu()
@@ -90,6 +105,7 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             PackageInfo = packageInfo;
             PackageDisplayName.text = packageInfo.displayName;
+            PackageVersion.text = packageInfo.version;
             PackageName.text = $"{packageInfo.name}@{packageInfo.version}";
             PackagePath.text = $"{packageInfo.assetPath}";
         }
@@ -161,7 +177,6 @@ namespace WhiteSparrow.PackageRepoEditor
         public PackageJsonSwitcherEditorItem() : base()
         {
             this.AddToClassList("package-information-item__PackageRecord");
-
         }
         
         public PackageJsonSwitcherEditorItem(FindLocalPackagesRequest.PackageRecord packageRecord): this()
@@ -173,6 +188,7 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             PackageRecord = packageRecord;
             PackageDisplayName.text = packageRecord.PackageDisplayName;
+            PackageVersion.text = packageRecord.PackageVersion;
             PackageName.text = $"{packageRecord.PackageName}@{packageRecord.PackageVersion}";
             PackagePath.text = $"{packageRecord.PackageFile}";
         }

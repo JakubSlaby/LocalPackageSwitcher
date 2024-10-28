@@ -18,16 +18,18 @@ namespace WhiteSparrow.PackageRepoEditor
             return window;
         }
 
-        private VisualElement m_ManifestPackageContainer;
-        private VisualElement m_ManifestPackageContent;
-        private VisualElement m_LocalPackagesContainer;
-        private VisualElement m_LocalPackagesContent;
+        private PackageSwitcherEditorListContainer m_ManifestPackageContainer;
+        private PackageSwitcherEditorListContainer m_LocalPackagesContainer;
 
         private PackageSwitcherEditorStatusMessage m_ManifestPackagesStatusMessage;
         private PackageSwitcherEditorStatusMessage m_LocalPackagesStatusMessage;
+
+        private Button m_RefreshPackages;
+        private Button m_RefreshLocalPackages;
         
         private void OnEnable()
         {
+            this.titleContent = EditorGUIUtility.TrTextContentWithIcon("Package Switcher", "d_Package Manager");
             InitializePaths();
             if (focusedWindow == this)
             {
@@ -52,10 +54,8 @@ namespace WhiteSparrow.PackageRepoEditor
 
         private void CreateGUI()
         {
-        
             m_ManifestPackagesStatusMessage = new PackageSwitcherEditorStatusMessage();
             m_LocalPackagesStatusMessage = new PackageSwitcherEditorStatusMessage();
-
             
             VisualElement root = rootVisualElement;
             root.AddToClassList("package-switcher-window");
@@ -67,30 +67,22 @@ namespace WhiteSparrow.PackageRepoEditor
             VisualElement container = scroll.contentContainer;
             container.AddToClassList("scroll-content-container");
             
-            m_ManifestPackageContainer = new VisualElement();
-            m_ManifestPackageContainer.AddToClassList("package-list-container");
-            m_ManifestPackageContainer.AddToClassList("container-packages");
+            m_ManifestPackageContainer = new PackageSwitcherEditorListContainer();
+            m_ManifestPackageContainer.Title.text = "Packages";
             container.Add(m_ManifestPackageContainer);
             
-            m_LocalPackagesContainer = new VisualElement();
-            m_LocalPackagesContainer.AddToClassList("package-list-container");
-            m_LocalPackagesContainer.AddToClassList("container-local-packages");
+            m_LocalPackagesContainer = new PackageSwitcherEditorListContainer();
+            m_LocalPackagesContainer.Title.text = "Available Local Packages";
+            m_RefreshLocalPackages = new Button();
+            m_RefreshLocalPackages.text = "refresh";
+            m_RefreshLocalPackages.clickable.clicked += () =>
+            {
+                FindLocalPackages(true);
+                UpdateLocalPackagesDisplay();
+            };
+            m_LocalPackagesContainer.TitleMetadataContainer.Add(m_RefreshLocalPackages);
             container.Add(m_LocalPackagesContainer);
-            Label manifestPackagesTitle = new Label("Packages");
-            manifestPackagesTitle.AddToClassList("title");
-            m_ManifestPackageContainer.Add(manifestPackagesTitle);
 
-            Label localPackagesTitle = new Label("Available Local Packages");
-            localPackagesTitle.AddToClassList("title");
-            m_LocalPackagesContainer.Add(localPackagesTitle);
-
-
-            m_ManifestPackageContent = new VisualElement();
-            m_ManifestPackageContent.AddToClassList("content");
-            m_ManifestPackageContainer.Add(m_ManifestPackageContent);
-            m_LocalPackagesContent = new VisualElement();
-            m_LocalPackagesContent.AddToClassList("content");
-            m_LocalPackagesContainer.Add(m_LocalPackagesContent);
 
             UpdatePackagesDisplay();
             UpdateLocalPackagesDisplay();
@@ -129,30 +121,30 @@ namespace WhiteSparrow.PackageRepoEditor
         
         private void UpdatePackagesDisplay()
         {
-            if (m_ManifestPackageContent == null)
+            if (m_ManifestPackageContainer == null)
                 return;
             
-            m_ManifestPackageContent.Clear();
+            m_ManifestPackageContainer.contentContainer.Clear();
             m_ManifestPackageVisualItems.Clear();
 
             if (m_FetchPackagesRequest == null || !m_FetchPackagesRequest.IsComplete)
             {
                 m_ManifestPackagesStatusMessage.Label.text = "Fetching packages...";
-                m_ManifestPackageContent.Add(m_ManifestPackagesStatusMessage);
+                m_ManifestPackageContainer.Add(m_ManifestPackagesStatusMessage);
                 return;
             }
             
             if (m_FetchPackagesRequest.IsComplete && m_FetchPackagesRequest.Error != null)
             {
                 m_ManifestPackagesStatusMessage.Label.text = m_FetchPackagesRequest.Error;
-                m_ManifestPackageContent.Add(m_ManifestPackagesStatusMessage);
+                m_ManifestPackageContainer.Add(m_ManifestPackagesStatusMessage);
                 return;
             }
             
             if (m_FetchPackagesRequest.IsComplete && m_FetchPackagesRequest.Result.Length == 0)
             {
                 m_ManifestPackagesStatusMessage.Label.text = "No packages found";
-                m_ManifestPackageContent.Add(m_ManifestPackagesStatusMessage);
+                m_ManifestPackageContainer.Add(m_ManifestPackagesStatusMessage);
                 return;
             }
 
@@ -160,8 +152,10 @@ namespace WhiteSparrow.PackageRepoEditor
             {
                 PackageInfoSwitcherEditorItem item = new PackageInfoSwitcherEditorItem(packageInfo);
                 m_ManifestPackageVisualItems.Add(item);
-                m_ManifestPackageContent.Add(item);
+                m_ManifestPackageContainer.Add(item);
             }
+
+            UpdateListChildrenClasses();
         }
 
         private static FindLocalPackagesRequest m_FindLocalPackagesRequest;
@@ -172,6 +166,9 @@ namespace WhiteSparrow.PackageRepoEditor
             if (m_FindLocalPackagesRequest != null)
             {
                 if (!force)
+                    return;
+
+                if (!m_FindLocalPackagesRequest.IsComplete)
                     return;
 
                 if (m_FindLocalPackagesRequest.IsComplete)
@@ -196,29 +193,29 @@ namespace WhiteSparrow.PackageRepoEditor
             new List<PackageJsonSwitcherEditorItem>();
         private void UpdateLocalPackagesDisplay()
         {
-            if (m_LocalPackagesContent == null)
+            if (m_LocalPackagesContainer == null)
                 return;
-            m_LocalPackagesContent.Clear();
+            m_LocalPackagesContainer.contentContainer.Clear();
             m_LocalPackageVisualItems.Clear();
             
             if (m_FindLocalPackagesRequest == null || !m_FindLocalPackagesRequest.IsComplete)
             {
                 m_LocalPackagesStatusMessage.Label.text = "Searching for packages...";
-                m_LocalPackagesContent.Add(m_LocalPackagesStatusMessage);
+                m_LocalPackagesContainer.Add(m_LocalPackagesStatusMessage);
                 return;
             }
             
             if (m_FindLocalPackagesRequest.IsComplete && m_FindLocalPackagesRequest.Error != null)
             {
                 m_LocalPackagesStatusMessage.Label.text = m_FindLocalPackagesRequest.Error;
-                m_LocalPackagesContent.Add(m_LocalPackagesStatusMessage);
+                m_LocalPackagesContainer.Add(m_LocalPackagesStatusMessage);
                 return;
             }
             
             if (m_FindLocalPackagesRequest.IsComplete && m_FindLocalPackagesRequest.Result.Length == 0)
             {
                 m_LocalPackagesStatusMessage.Label.text = "No packages found";
-                m_LocalPackagesContent.Add(m_LocalPackagesStatusMessage);
+                m_LocalPackagesContainer.Add(m_LocalPackagesStatusMessage);
                 return;
             }
 
@@ -226,10 +223,32 @@ namespace WhiteSparrow.PackageRepoEditor
             {
                 PackageJsonSwitcherEditorItem item = new PackageJsonSwitcherEditorItem(packageInfo);
                 m_LocalPackageVisualItems.Add(item);
-                m_LocalPackagesContent.Add(item);
+                m_LocalPackagesContainer.Add(item);
             }
+
+            UpdateListChildrenClasses();
         }
 
+        private void UpdateListChildrenClasses()
+        {
+            bool odd = false;
+            if (m_ManifestPackageContainer != null)
+            {
+                var children = m_ManifestPackageContainer.contentContainer.Children();
+                foreach (var child in children)
+                {
+                    child.EnableInClassList("odd", odd = !odd);
+                }
+            }
+            if (m_LocalPackagesContainer != null)
+            {
+                var children = m_LocalPackagesContainer.contentContainer.Children();
+                foreach (var child in children)
+                {
+                    child.EnableInClassList("odd", odd = !odd);
+                }
+            }
+        }
 
 
         private static FileInfo s_ManifestFile;
@@ -286,6 +305,7 @@ namespace WhiteSparrow.PackageRepoEditor
             }
             CurrentRequest = null;
         }
+
     }
 
     public class PackageSwitcherEditorStatusMessage : VisualElement
@@ -303,6 +323,38 @@ namespace WhiteSparrow.PackageRepoEditor
         public PackageSwitcherEditorStatusMessage(string message) : this()
         {
             this.Label.text = message;
+        }
+    }
+
+    public class PackageSwitcherEditorListContainer : VisualElement
+    {
+        public VisualElement TitleRow { get; private set; }
+        public Label Title { get; private set; }
+        public VisualElement TitleMetadataContainer { get; private set; }
+        
+        private VisualElement m_Content;
+        public override VisualElement contentContainer => m_Content;
+
+        public PackageSwitcherEditorListContainer()
+        {
+            this.AddToClassList("package-list-container");
+            this.AddToClassList("container-local-packages");
+
+            TitleRow = new VisualElement();
+            TitleRow.AddToClassList("title-row");
+            hierarchy.Add(TitleRow);
+            
+            Title = new Label("Available Local Packages");
+            Title.AddToClassList("title");
+            TitleRow.Add(Title);
+
+            TitleMetadataContainer = new VisualElement();
+            TitleMetadataContainer.AddToClassList("title-metadata-container");
+            TitleRow.Add(TitleMetadataContainer);
+            
+            m_Content = new VisualElement();
+            m_Content.AddToClassList("content");
+            hierarchy.Add(m_Content);
         }
     }
 }

@@ -5,7 +5,6 @@
 
 .package-switcher-window .scroll-content-container
 {
-	padding: 10px;
 }
 
 .package-list-container
@@ -13,37 +12,94 @@
 	
 }
 
+.package-list-container .title-row
+{
+	background-color: var(--unity-colors-inspector_titlebar-border_accent);
+	align-items: center;
+	flex-direction: row;
+	padding: 8px 8px;
+	border-top-color: var(--unity-colors-inspector_titlebar-border);
+	border-top-width: 1px;
+	border-bottom-color: var(--unity-colors-inspector_titlebar-border);
+	border-bottom-width: 1px;
+}
+
 .package-list-container Label.title
 {
 	font-size: var(--unity-metrics-default-font_big_size);
 	-unity-font-style: bold;
-	margin-bottom: 8px;
+	flex-grow: 1;
 }
 .package-list-container .content
 {
-	padding-left: 10px;
 }
 
 .package-information-item
 {
+	background-color: var(--unity-colors-window-background);
+	margin-bottom: 6px;
+	padding: 2px 10px;
+	
+}
+
+.package-information-item.odd
+{
+	background-color: var(--unity-colors-alternated_rows-background);
+}
+
+.package-information-item .primary-row
+{
 	flex-direction: row;
 	align-items: center;
-	margin-bottom: 6px;
+	padding: 4px;
 }
+
 .package-information-item .title-container
 {
 	flex-grow: 1;
 	flex-shrink: 0;
+	flex-direction: row;
+	align-items: center;
+}
+
+.package-information-item .title-container .package-display-name
+{
+	font-size: var(--unity-metrics-default-font_big_size);
+}
+.package-information-item .title-container Label.package-version
+{
+	margin-left: 10px;
 }
 
 .package-information-item .meta-data-container
 {
-	flex-shrink: 1;
+	display: none;
 	overflow: hidden;
-	align-items: flex-end;
-	margin-left: 10px
+	padding: 6px;
+	margin: 4px;
+	margin-top: 0;
+	border-color: var(--unity-colors-inspector_titlebar-border);
+	background-color: var(--unity-colors-inspector_titlebar-border_accent);
+	border-width: 1px;
+	border-radius: 6px;
 }
+.package-information-item.toggle-active  .meta-data-container
+{
+	display: flex;
+}
+
+
 .package-information-item .actions-container
 {
 	flex-shrink: 0;
+}
+
+.package-switcher__status-message
+{
+	border-color: var(--unity-colors-inspector_titlebar-border);
+	background-color: var(--unity-colors-inspector_titlebar-border_accent);
+	border-width: 1px;
+	border-radius: 6px;
+	margin: 10px;
+	padding: 4px;
 }

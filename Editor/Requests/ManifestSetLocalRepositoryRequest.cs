@@ -9,7 +9,7 @@ using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
 {
-    public class ManifestSetLocalRepositoryRequest : AbstractRequest
+    public class ManifestSetLocalRepositoryRequest : AbstractManifestPackageUpdateRequest
     {
         private PackageInfo m_PackageInfo;
         private FindLocalPackagesRequest.PackageRecord m_LocalPackageRecord;
@@ -26,16 +26,6 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
         
         protected override void StartRequest()
         {
-            var manifestFile = PackageSwitcherEditor.ManifestFile;
-            if (!manifestFile.Exists)
-            {
-                Debug.LogError($"Package Manifest doesn't exist at path {manifestFile.FullName}");
-                return;
-            }
-
-            string manifestContent = File.ReadAllText(manifestFile.FullName);
-            var manifest = JObject.Parse(manifestContent);
-
             string packageName = null;
             if (m_PackageInfo != null)
             {
@@ -78,38 +68,17 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
                 return;
             }
             
-            string relativePath = Path.GetRelativePath(manifestFile.Directory.FullName,
+            string relativePath = Path.GetRelativePath(PackageSwitcherEditor.ManifestFile.Directory.FullName,
                 m_LocalPackageRecord.PackageFile.Directory.FullName).Replace("\\", "/");
-
             string targetValue = $"file:{relativePath}";
-            
-            var packageToken = manifest["dependencies"]?[packageName];
-            if (packageToken != null)
-            {
-                string existingValue = packageToken.Value<string>();
-                if (existingValue == targetValue)
-                {
-                    EditorUtility.DisplayDialog("Add package", "Already added", "ok");
-                    Complete();
-                    return;
-                }
 
-                if (!EditorUtility.DisplayDialog("Change package path",
-                        $"{packageName} is already indexed with value:\n{existingValue}\n\n you are trying to change it to:\n{targetValue}",
-                        "Continue", "Cancel"))
-                {
-                    Complete();
-                    return;
-                }
-                
-                manifest["dependencies"][packageName] = targetValue;
-            }
-            else
+            if (!LoadAndUpdateManifest(packageName, targetValue))
             {
-                manifest["dependencies"][packageName] = targetValue;
+                Complete();
+                return;
             }
             
-            File.WriteAllText(manifestFile.FullName, manifest.ToString(Formatting.Indented));
+            
             Complete();
             Client.Resolve();
         }

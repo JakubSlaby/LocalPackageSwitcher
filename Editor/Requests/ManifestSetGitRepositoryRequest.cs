@@ -9,7 +9,7 @@ using WhiteSparrow.PackageRepoEditor;
 
 namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
 {
-    public class ManifestSetGitRepositoryRequest : AbstractRequest
+    public class ManifestSetGitRepositoryRequest : AbstractManifestPackageUpdateRequest
     {
         private PackageInfo m_PackageInfo;
 
@@ -19,47 +19,15 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
         }
         protected override void StartRequest()
         {
-            var manifestFile = PackageSwitcherEditor.ManifestFile;
-            if (!manifestFile.Exists)
+            string targetValue = m_PackageInfo.repository.url.Replace("git://", "https://");
+            string packageName = m_PackageInfo.name;
+
+            if (!LoadAndUpdateManifest(packageName, targetValue))
             {
-                Debug.LogError($"Package Manifest doesn't exist at path {manifestFile.FullName}");
+                Complete();
                 return;
             }
             
-            string manifestContent = File.ReadAllText(manifestFile.FullName);
-            var manifest = JObject.Parse(manifestContent);
-
-            
-            string targetValue = m_PackageInfo.repository.url.Replace("git://", "https://");
-            string packageName = m_PackageInfo.name;
-            
-            var packageToken = manifest["dependencies"]?[packageName];
-            if (packageToken != null)
-            {
-                string existingValue = packageToken.Value<string>();
-                if (existingValue == targetValue)
-                {
-                    EditorUtility.DisplayDialog("Add package", "Already added", "ok");
-                    Complete();
-                    return;
-                }
-
-                if (!EditorUtility.DisplayDialog("Set package Git Url",
-                        $"{packageName} is already indexed with value:\n{existingValue}\n\n you are trying to change it to:\n{targetValue}",
-                        "Continue", "Cancel"))
-                {
-                    Complete();
-                    return;
-                }
-                
-                manifest["dependencies"][packageName] = targetValue;
-            }
-            else
-            {
-                manifest["dependencies"][packageName] = targetValue;
-            }
-            
-            File.WriteAllText(manifestFile.FullName, manifest.ToString(Formatting.Indented));
             Complete();
             Client.Resolve();
         }
