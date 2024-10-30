@@ -73,8 +73,8 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
         {
             m_SearchDirectories = searchDirectories;
         }
-        
-        public PackageRecord[] Result { get; private set; }
+
+        public PackageRecord[] Result { get; private set; } = Array.Empty<PackageRecord>();
         
         protected override void StartRequest()
         {

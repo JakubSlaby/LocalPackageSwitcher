@@ -129,7 +129,7 @@ namespace WhiteSparrow.PackageRepoEditor
 
             if (m_FetchPackagesRequest == null || !m_FetchPackagesRequest.IsComplete)
             {
-                m_ManifestPackagesStatusMessage.Label.text = "Fetching packages...";
+                m_ManifestPackagesStatusMessage.SetMessage("Fetching packages...");
                 m_ManifestPackageContainer.Add(m_ManifestPackagesStatusMessage);
                 return;
             }
@@ -143,7 +143,7 @@ namespace WhiteSparrow.PackageRepoEditor
             
             if (m_FetchPackagesRequest.IsComplete && m_FetchPackagesRequest.Result.Length == 0)
             {
-                m_ManifestPackagesStatusMessage.Label.text = "No packages found";
+                m_ManifestPackagesStatusMessage.SetMessage("No packages found");
                 m_ManifestPackageContainer.Add(m_ManifestPackagesStatusMessage);
                 return;
             }
@@ -200,7 +200,7 @@ namespace WhiteSparrow.PackageRepoEditor
             
             if (m_FindLocalPackagesRequest == null || !m_FindLocalPackagesRequest.IsComplete)
             {
-                m_LocalPackagesStatusMessage.Label.text = "Searching for packages...";
+                m_LocalPackagesStatusMessage.SetMessage("Searching for packages...");
                 m_LocalPackagesContainer.Add(m_LocalPackagesStatusMessage);
                 return;
             }
@@ -214,8 +214,18 @@ namespace WhiteSparrow.PackageRepoEditor
             
             if (m_FindLocalPackagesRequest.IsComplete && m_FindLocalPackagesRequest.Result.Length == 0)
             {
-                m_LocalPackagesStatusMessage.Label.text = "No packages found";
-                m_LocalPackagesContainer.Add(m_LocalPackagesStatusMessage);
+	            if (PackageRepoEditorSettings.instance == null ||
+	                PackageRepoEditorSettings.instance.searchPaths == null ||
+	                PackageRepoEditorSettings.instance.searchPaths.Length == 0)
+	            {
+		            m_LocalPackagesStatusMessage.SetMessage("No local package directories defined.", "configure in settings", ShowSwitcherSettingsWindow);
+	            }
+	            else
+	            {
+					m_LocalPackagesStatusMessage.SetMessage("No packages found");
+	            }
+	            m_LocalPackagesContainer.Add(m_LocalPackagesStatusMessage);
+	            
                 return;
             }
 
@@ -227,6 +237,11 @@ namespace WhiteSparrow.PackageRepoEditor
             }
 
             UpdateListChildrenClasses();
+        }
+
+        private void ShowSwitcherSettingsWindow(EventBase obj)
+        {
+	        SettingsService.OpenProjectSettings(PackageRepoEditorSettingsInspector.SettingsPath);
         }
 
         private void UpdateListChildrenClasses()
@@ -311,6 +326,8 @@ namespace WhiteSparrow.PackageRepoEditor
     public class PackageSwitcherEditorStatusMessage : VisualElement
     {
         public Label Label { get; private set; }
+        public Button ContextButton { get; private set; }
+        private Action<EventBase> m_ContextButtonAction;
         
         public PackageSwitcherEditorStatusMessage()
         {
@@ -318,11 +335,51 @@ namespace WhiteSparrow.PackageRepoEditor
             
             Label = new Label();
             this.Add(Label);
+            
+            ContextButton = new Button();
+            ContextButton.clickable.clickedWithEventInfo += OnContextButtonClicked;
+            ContextButton.text = "Settings";
+            this.Add(ContextButton);
+        }
+
+        private void OnContextButtonClicked(EventBase eventBase)
+        {
+	        m_ContextButtonAction?.Invoke(eventBase);
         }
 
         public PackageSwitcherEditorStatusMessage(string message) : this()
         {
-            this.Label.text = message;
+	        SetMessage(message);
+        }
+
+        public PackageSwitcherEditorStatusMessage(string message, string buttonText, Action buttonCallback) : this(message, buttonText, e => buttonCallback())
+        {
+	        
+        }
+        public PackageSwitcherEditorStatusMessage(string message, string buttonText, Action<EventBase> buttonCallback) : this()
+        {
+	        SetMessage(message, buttonText, buttonCallback);
+        }
+
+        public void SetMessage(string message)
+        {
+	        SetMessage(message, null, null);
+        }
+        public void SetMessage(string message, string buttonText, Action<EventBase> buttonCallback)
+        {
+	        this.Label.text = message;
+            if (ContextButton.parent != null)
+            {
+                m_ContextButtonAction = null;
+                ContextButton.RemoveFromHierarchy();
+            }
+
+            if (buttonCallback != null)
+            {
+	            ContextButton.text = buttonText;
+	            m_ContextButtonAction = buttonCallback;
+	            this.Add(ContextButton);
+            }
         }
     }
 

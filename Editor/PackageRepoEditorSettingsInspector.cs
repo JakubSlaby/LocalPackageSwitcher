@@ -34,11 +34,12 @@ namespace WhiteSparrow.PackageRepoEditor
 
 
 
+		public const string SettingsPath = "Project/White Sparrow/Package Repo Switcher";
 		[SettingsProvider]
 		static SettingsProvider CreateSettingsProvider()
 		{
 			// return new SettingsProvider("Preferences/Package Repo Switcher", SettingsScope.User);
-			return AssetSettingsProvider.CreateProviderFromObject("Project/White Sparrow/Package Repo Switcher", PackageRepoEditorSettings.instance);
+			return AssetSettingsProvider.CreateProviderFromObject(SettingsPath, PackageRepoEditorSettings.instance);
 		}
 	}
 }
