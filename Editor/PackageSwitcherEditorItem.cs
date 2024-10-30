@@ -17,6 +17,7 @@ namespace WhiteSparrow.PackageRepoEditor
         public Label PackagePath { get; private set; }
         
         public VisualElement TitleContainer { get; private set; }
+        public VisualElement TagsContainer { get; private set; }
         public VisualElement MetaDataContainer { get; private set; }
         public VisualElement ActionsContainer { get; private set; }
         
@@ -42,6 +43,10 @@ namespace WhiteSparrow.PackageRepoEditor
             PackageVersion =  new Label();
             PackageVersion.AddToClassList("package-version");
             TitleContainer.Add(PackageVersion);
+            
+            TagsContainer = new VisualElement();
+            TagsContainer.AddToClassList("package-tags-container");
+            primaryRow.Add(TagsContainer);
 
             
             MetaDataContainer = new VisualElement();
@@ -85,6 +90,41 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             
         }
+
+        public virtual void UpdateInfo()
+        {
+	        
+        }
+
+        public void SetTag(string tag, bool enabled)
+        {
+	        var children = TagsContainer.Children();
+	        Label target = null;
+	        foreach (var child in children)
+	        {
+		        if (child is not Label label)
+			        continue;
+		        if (label.text != tag)
+			        continue;
+		        target = label;
+		        break;
+	        }
+	        if (!enabled)
+	        {
+		        if(target != null)
+			        target.RemoveFromHierarchy();
+		        return;
+	        }
+
+	        if (target != null)
+		        return;
+
+	        target = new Label();
+	        target.text = tag;
+	        target.AddToClassList("package-tag");
+	        target.AddToClassList($"tag-{tag.Replace(" ", "")}");
+	        TagsContainer.Add(target);
+        }
     }
 
     public class PackageInfoSwitcherEditorItem : AbstractPackageSwitcherEditorItem
@@ -108,6 +148,14 @@ namespace WhiteSparrow.PackageRepoEditor
             PackageVersion.text = packageInfo.version;
             PackageName.text = $"{packageInfo.name}@{packageInfo.version}";
             PackagePath.text = $"{packageInfo.assetPath}";
+
+            UpdateInfo();
+        }
+
+        public override void UpdateInfo()
+        {
+		    SetTag("Local", PackageInfo.source == PackageSource.Local);
+		    SetTag("Git", PackageInfo.source == PackageSource.Git);
         }
 
         protected override void BuildActionsMenu(GenericMenu menu)
@@ -120,13 +168,13 @@ namespace WhiteSparrow.PackageRepoEditor
 
                 if (PackageInfo.versions.compatible.Length > 0)
                 {
-                    menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/{PackageInfo.versions.latestCompatible}"), false, TriggerSwitchToRemotePackage, new Tuple<PackageInfo, string>(PackageInfo, PackageInfo.versions.latestCompatible));
+                    menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/npm/{PackageInfo.versions.latestCompatible}"), false, TriggerSwitchToRemotePackage, new Tuple<PackageInfo, string>(PackageInfo, PackageInfo.versions.latestCompatible));
                     for (int i = 0; i < Mathf.Min(PackageInfo.versions.compatible.Length, 10); i++)
                     {
                         var compatibleVersion = PackageInfo.versions.compatible[i];
                         if (compatibleVersion == PackageInfo.versions.latestCompatible)
                             continue;
-                        menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/{compatibleVersion}"), false, TriggerSwitchToRemotePackage, new Tuple<PackageInfo, string>(PackageInfo, compatibleVersion));
+                        menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/npm/{compatibleVersion}"), false, TriggerSwitchToRemotePackage, new Tuple<PackageInfo, string>(PackageInfo, compatibleVersion));
                     }
                 }
                 else
@@ -136,7 +184,7 @@ namespace WhiteSparrow.PackageRepoEditor
 
                 if (PackageInfo.repository != null)
                 {
-                    menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/Git: {PackageInfo.repository.url.Replace("/", "|")}"), false, TriggerSwitchToGitPackage);
+                    menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/git/{PackageInfo.repository.url.Replace("/", "|")}"), false, TriggerSwitchToGitPackage);
                 }
             }
             else
@@ -161,6 +209,8 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             if (userData is not Tuple<PackageInfo, string> tuple)
                 return;
+            
+            PackageSwitcherEditor.StartRequest(new ManifestSetRemoteVersionRequest(tuple.Item1, tuple.Item2));
         }
 
         private void TriggerSwitchToGitPackage()
