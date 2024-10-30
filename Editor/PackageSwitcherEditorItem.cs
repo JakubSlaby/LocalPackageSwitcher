@@ -209,6 +209,8 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             if (userData is not Tuple<PackageInfo, string> tuple)
                 return;
+            
+            PackageSwitcherEditor.StartRequest(new ManifestSetRemoteVersionRequest(tuple.Item1, tuple.Item2));
         }
 
         private void TriggerSwitchToGitPackage()
