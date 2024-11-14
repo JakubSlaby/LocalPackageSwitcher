@@ -4,7 +4,7 @@
   "description": "Tool to allow for easy swapping between having a package imported in to the project and having a checked out repository to work on the code inside of the package.",
   "author": "Jakub Slaby <jakubslaby@gmail.com>",
   "tags": [],
-  "version": "0.2.1",
+  "version": "0.2.3",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json" : "3.2.1"
   },
