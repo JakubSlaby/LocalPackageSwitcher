@@ -15,6 +15,8 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             PackageSwitcherEditor window = EditorWindow.GetWindow<PackageSwitcherEditor>();
             window.Show();
+            window.FetchPackages(true);
+            window.FindLocalPackages(true);
             return window;
         }
 
@@ -41,6 +43,19 @@ namespace WhiteSparrow.PackageRepoEditor
                 m_PendingFetchPackagesRequest = true;
                 m_PendingFindLocalPackagesRequest = true;
             }
+
+            OnRequestComplete += OnItemRequestComplete;
+        }
+
+        private void OnDestroy()
+        {
+	        
+	        OnRequestComplete -= OnItemRequestComplete;
+        }
+
+        private void OnItemRequestComplete()
+        {
+	        FetchPackages(true);
         }
 
         private void OnFocus()
@@ -69,6 +84,13 @@ namespace WhiteSparrow.PackageRepoEditor
             
             m_ManifestPackageContainer = new PackageSwitcherEditorListContainer();
             m_ManifestPackageContainer.Title.text = "Packages";
+            m_RefreshPackages = new Button();
+            m_RefreshPackages.text = "refresh";
+            m_RefreshPackages.clickable.clicked += () =>
+            {
+				FetchPackages(true);
+            };
+            m_ManifestPackageContainer.TitleMetadataContainer.Add(m_RefreshPackages);
             container.Add(m_ManifestPackageContainer);
             
             m_LocalPackagesContainer = new PackageSwitcherEditorListContainer();
@@ -78,7 +100,6 @@ namespace WhiteSparrow.PackageRepoEditor
             m_RefreshLocalPackages.clickable.clicked += () =>
             {
                 FindLocalPackages(true);
-                UpdateLocalPackagesDisplay();
             };
             m_LocalPackagesContainer.TitleMetadataContainer.Add(m_RefreshLocalPackages);
             container.Add(m_LocalPackagesContainer);
@@ -97,6 +118,8 @@ namespace WhiteSparrow.PackageRepoEditor
             {
                 if (!force)
                     return;
+                if (!m_FetchPackagesRequest.IsComplete)
+	                return;
 
                 if (m_FetchPackagesRequest.IsComplete)
                 {
@@ -105,6 +128,7 @@ namespace WhiteSparrow.PackageRepoEditor
                 }
             }
 
+            UpdatePackagesDisplay();
             m_FetchPackagesRequest = new FetchPackagesRequest();
             m_FetchPackagesRequest.OnComplete += OnFetchPackagesRequestComplete;
             m_FetchPackagesRequest.Start();
@@ -177,6 +201,7 @@ namespace WhiteSparrow.PackageRepoEditor
                     m_FindLocalPackagesRequest = null;
                 }
             }
+	        UpdateLocalPackagesDisplay();
 
             m_FindLocalPackagesRequest = new FindLocalPackagesRequest(PackageRepoEditorSettings.instance.searchPaths);
             m_FindLocalPackagesRequest.OnComplete += OnFindLocalPackagesRequestComplete;
@@ -290,6 +315,7 @@ namespace WhiteSparrow.PackageRepoEditor
 
 
         public static AbstractRequest CurrentRequest { get; private set; }
+        private static event Action OnRequestComplete;
         public static T StartRequest<T>(T request) where T : AbstractRequest
         {
             if (CurrentRequest != null)
@@ -319,6 +345,7 @@ namespace WhiteSparrow.PackageRepoEditor
                 CurrentRequest.OnComplete -= OnCurrentRequestComplete;
             }
             CurrentRequest = null;
+            OnRequestComplete?.Invoke();
         }
 
     }

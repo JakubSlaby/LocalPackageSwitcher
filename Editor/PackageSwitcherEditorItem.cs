@@ -171,7 +171,7 @@ namespace WhiteSparrow.PackageRepoEditor
                     menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/npm/{PackageInfo.versions.latestCompatible}"), false, TriggerSwitchToRemotePackage, new Tuple<PackageInfo, string>(PackageInfo, PackageInfo.versions.latestCompatible));
                     for (int i = 0; i < Mathf.Min(PackageInfo.versions.compatible.Length, 10); i++)
                     {
-                        var compatibleVersion = PackageInfo.versions.compatible[i];
+                        var compatibleVersion = PackageInfo.versions.compatible[^(i + 1)];
                         if (compatibleVersion == PackageInfo.versions.latestCompatible)
                             continue;
                         menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/npm/{compatibleVersion}"), false, TriggerSwitchToRemotePackage, new Tuple<PackageInfo, string>(PackageInfo, compatibleVersion));

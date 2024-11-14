@@ -29,7 +29,7 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
             string packageName = null;
             if (m_PackageInfo != null)
             {
-                packageName = m_PackageInfo.packageId;
+                packageName = m_PackageInfo.name;
             }
             else if (m_LocalPackageRecord != null)
             {
