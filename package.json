@@ -1,19 +1,20 @@
 ﻿{
-  "name": "com.jakubslaby.packagerepoeditor",
-  "displayName": "Package Repo Switcher",
+  "name": "com.jakubslaby.localpackageswitcher",
+  "displayName": "Local Package Switcher",
   "description": "Tool to allow for easy swapping between having a package imported in to the project and having a checked out repository to work on the code inside of the package.",
   "author": "Jakub Slaby <jakubslaby@gmail.com>",
   "tags": [],
-  "version": "0.2.3",
+  "version": "0.3.0",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json" : "3.2.1"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/JakubSlaby/Shared-PackageRepoEditor.git"
+    "url": "git://github.com/JakubSlaby/LocalPackageSwitcher.git"
   },
+  "homepage": "https://github.com/JakubSlaby/LocalPackageSwitcher",
   "bugs": {
-    "url": "https://github.com/JakubSlaby/Shared-PackageRepoEditor/issues"
+    "url": "https://github.com/JakubSlaby/LocalPackageSwitcher/issues"
   },
   "directories": {
     "editor": "./Editor"

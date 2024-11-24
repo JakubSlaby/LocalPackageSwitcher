@@ -3,15 +3,21 @@ using System.Collections.Generic;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
-namespace WhiteSparrow.PackageRepoEditor
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
 	public class FetchPackagesRequest : AbstractRequest
 	{
+		public bool OnlineMode { get; private set; }
 		public PackageInfo[] Result { get; private set; }
+
+		public FetchPackagesRequest(bool onlineMode)
+		{
+			OnlineMode = onlineMode;
+		}
 		
 		protected override void StartRequest()
 		{
-			PackageManagerRequest.Wrap(Client.List(), OnListRequestCompleted);
+			PackageManagerRequest.Wrap(Client.List(!OnlineMode), OnListRequestCompleted);
 		}
 
 		private void OnListRequestCompleted(ListRequest request)

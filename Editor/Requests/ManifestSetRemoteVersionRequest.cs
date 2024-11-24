@@ -1,12 +1,11 @@
-﻿
-using UnityEditor.PackageManager;
+﻿using UnityEditor.PackageManager;
 
-namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
     public class ManifestSetRemoteVersionRequest : AbstractManifestPackageUpdateRequest
     {
         private PackageInfo m_PackageInfo;
-        private FindLocalPackagesRequest.PackageRecord m_PackageRecord;
+        private PackageJsonInfo m_PackageJsonInfo;
         private string m_Version;
         
         public ManifestSetRemoteVersionRequest(PackageInfo packageInfo, string version)
@@ -15,17 +14,17 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
             m_Version = version;
         }
         
-        public ManifestSetRemoteVersionRequest(FindLocalPackagesRequest.PackageRecord packageRecord, string version)
+        public ManifestSetRemoteVersionRequest(PackageJsonInfo packageJsonInfo, string version)
         {
-            m_PackageRecord = packageRecord;
+            m_PackageJsonInfo = packageJsonInfo;
             m_Version = version;
         }
         
         protected override void StartRequest()
         {
             string packageName = null;
-            if (m_PackageRecord != null)
-                packageName = m_PackageRecord.PackageName;
+            if (m_PackageJsonInfo != null)
+                packageName = m_PackageJsonInfo.PackageName;
             else if (m_PackageInfo != null)
                 packageName = m_PackageInfo.name;
 

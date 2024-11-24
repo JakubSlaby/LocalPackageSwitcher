@@ -1,10 +1,10 @@
 ﻿using System;
-using Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
+using WhiteSparrow.PackageRepoEditor.Requests;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace WhiteSparrow.PackageRepoEditor
@@ -184,7 +184,7 @@ namespace WhiteSparrow.PackageRepoEditor
 
                 if (PackageInfo.repository != null)
                 {
-                    menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/git/{PackageInfo.repository.url.Replace("/", "|")}"), false, TriggerSwitchToGitPackage);
+                    menu.AddItem(EditorGUIUtility.TrTextContent($"Switch to remote package/git/{PackageInfo.repository.url.Replace("/", "\\")}"), false, TriggerSwitchToGitPackage);
                 }
             }
             else
@@ -222,25 +222,25 @@ namespace WhiteSparrow.PackageRepoEditor
 
     public class PackageJsonSwitcherEditorItem : AbstractPackageSwitcherEditorItem
     {
-        public FindLocalPackagesRequest.PackageRecord PackageRecord { get; private set; }
+        public PackageJsonInfo PackageJsonInfo { get; private set; }
 
         public PackageJsonSwitcherEditorItem() : base()
         {
             this.AddToClassList("package-information-item__PackageRecord");
         }
         
-        public PackageJsonSwitcherEditorItem(FindLocalPackagesRequest.PackageRecord packageRecord): this()
+        public PackageJsonSwitcherEditorItem(PackageJsonInfo packageJsonInfo): this()
         {
-            SetPackageRecord(packageRecord);
+            SetPackageRecord(packageJsonInfo);
         }
 
-        public void SetPackageRecord(FindLocalPackagesRequest.PackageRecord packageRecord)
+        public void SetPackageRecord(PackageJsonInfo packageJsonInfo)
         {
-            PackageRecord = packageRecord;
-            PackageDisplayName.text = packageRecord.PackageDisplayName;
-            PackageVersion.text = packageRecord.PackageVersion;
-            PackageName.text = $"{packageRecord.PackageName}@{packageRecord.PackageVersion}";
-            PackagePath.text = $"{packageRecord.PackageFile}";
+            PackageJsonInfo = packageJsonInfo;
+            PackageDisplayName.text = packageJsonInfo.PackageDisplayName;
+            PackageVersion.text = packageJsonInfo.PackageVersion;
+            PackageName.text = $"{packageJsonInfo.PackageName}@{packageJsonInfo.PackageVersion}";
+            PackagePath.text = $"{packageJsonInfo.PackageFile}";
         }
 
         protected override void BuildActionsMenu(GenericMenu menu)
@@ -255,12 +255,17 @@ namespace WhiteSparrow.PackageRepoEditor
 
         private void TriggerAddAsPackage()
         {
-            PackageSwitcherEditor.StartRequest(new ManifestSetLocalRepositoryRequest(PackageRecord));
+            PackageSwitcherEditor.StartRequest(new ManifestSetLocalRepositoryRequest(PackageJsonInfo));
         }
 
         private void TriggerRevealInFinder()
         {
-            EditorUtility.RevealInFinder(PackageRecord.PackageFile.FullName);
+            EditorUtility.RevealInFinder(PackageJsonInfo.PackageFile.FullName);
+        }
+
+        public void SetRelatedPackage(PackageInfo info)
+        {
+            SetTag("In Use", info.source == PackageSource.Local && info.resolvedPath == PackageJsonInfo.PackageFile.Directory.FullName);
         }
     }
 }

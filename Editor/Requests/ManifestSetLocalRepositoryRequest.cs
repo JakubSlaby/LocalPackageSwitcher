@@ -1,27 +1,24 @@
 ﻿using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
-using WhiteSparrow.PackageRepoEditor;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
-namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
     public class ManifestSetLocalRepositoryRequest : AbstractManifestPackageUpdateRequest
     {
         private PackageInfo m_PackageInfo;
-        private FindLocalPackagesRequest.PackageRecord m_LocalPackageRecord;
+        private PackageJsonInfo m_LocalPackageJsonInfo;
 
         public ManifestSetLocalRepositoryRequest(PackageInfo packageInfo)
         {
             m_PackageInfo = packageInfo;
         }
         
-        public ManifestSetLocalRepositoryRequest(FindLocalPackagesRequest.PackageRecord localPackageRecord)
+        public ManifestSetLocalRepositoryRequest(PackageJsonInfo localPackageJsonInfo)
         {
-            m_LocalPackageRecord = localPackageRecord;
+            m_LocalPackageJsonInfo = localPackageJsonInfo;
         }
         
         protected override void StartRequest()
@@ -31,12 +28,12 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
             {
                 packageName = m_PackageInfo.name;
             }
-            else if (m_LocalPackageRecord != null)
+            else if (m_LocalPackageJsonInfo != null)
             {
-                packageName = m_LocalPackageRecord.PackageName;
+                packageName = m_LocalPackageJsonInfo.PackageName;
             }
 
-            if (m_LocalPackageRecord == null)
+            if (m_LocalPackageJsonInfo == null)
             {
                 var targetOpenFile = EditorUtility.OpenFilePanel("Open package file", Application.dataPath, "json");
 
@@ -59,17 +56,17 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
                     return;
                 }
 
-                m_LocalPackageRecord = FindLocalPackagesRequest.PackageRecord.ReadFromFile(packageFile);
+                m_LocalPackageJsonInfo = PackageJsonInfo.ReadFromFile(packageFile);
             }
 
-            if (m_LocalPackageRecord == null)
+            if (m_LocalPackageJsonInfo == null)
             {
                 Complete();
                 return;
             }
             
             string relativePath = Path.GetRelativePath(PackageSwitcherEditor.ManifestFile.Directory.FullName,
-                m_LocalPackageRecord.PackageFile.Directory.FullName).Replace("\\", "/");
+                m_LocalPackageJsonInfo.PackageFile.Directory.FullName).Replace("\\", "/");
             string targetValue = $"file:{relativePath}";
 
             if (!LoadAndUpdateManifest(packageName, targetValue))

@@ -3,9 +3,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
-using WhiteSparrow.PackageRepoEditor;
 
-namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
     public abstract class AbstractManifestPackageUpdateRequest : AbstractRequest
     {

@@ -1,13 +1,7 @@
-﻿using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using UnityEditor;
-using UnityEditor.PackageManager;
-using UnityEngine;
+﻿using UnityEditor.PackageManager;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
-using WhiteSparrow.PackageRepoEditor;
 
-namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
     public class ManifestSetGitRepositoryRequest : AbstractManifestPackageUpdateRequest
     {

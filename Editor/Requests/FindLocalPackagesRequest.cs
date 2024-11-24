@@ -3,66 +3,16 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using UnityEditor;
-using UnityEngine;
-using WhiteSparrow.PackageRepoEditor;
 
-namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
     public class FindLocalPackagesRequest : AbstractRequest
     {
-        public class PackageRecord
-        {
-            public string PackageName;
-            public string PackageDisplayName;
-            public string PackageVersion;
-
-            public string PackageNameAndVersion;
-            
-            public FileInfo PackageFile;
-
-            public bool ReadFromJson(string packageJson)
-            {
-                var package = JObject.Parse(packageJson);
-
-                this.PackageName = package["name"]?.Value<string>();
-                this.PackageDisplayName = package["displayName"]?.Value<string>();
-                this.PackageVersion = package["version"]?.Value<string>();
-
-                if (string.IsNullOrWhiteSpace(this.PackageName))
-                    return false;
-                if (string.IsNullOrWhiteSpace(this.PackageVersion))
-                    return false;
-                
-                if (string.IsNullOrWhiteSpace(this.PackageDisplayName))
-                    this.PackageDisplayName = this.PackageName;
-                return true;
-            }
-
-            public static PackageRecord ReadFromFile(string pathAbsolute)
-            {
-                FileInfo packageFile = new FileInfo(pathAbsolute);
-                return ReadFromFile(packageFile);
-            }
-            public static PackageRecord ReadFromFile(FileInfo packageFile)
-            {
-                string packageJson = File.ReadAllText(packageFile.FullName);
-                
-                PackageRecord output = new PackageRecord();
-                if (!output.ReadFromJson(packageJson))
-                    return null;
-                
-                output.PackageFile = packageFile;
-                
-                return output;
-            }
-        }
-
         private string[] m_SearchDirectories;
         private CancellationTokenSource m_CancellationTokenSource;
         private ConcurrentBag<FileInfo> m_CandidatePackageFiles;
-        private ConcurrentBag<PackageRecord> m_OutputRecords;
+        private ConcurrentBag<PackageJsonInfo> m_OutputRecords;
 
         private static string[] s_ProhibitedPathPatterns = new[]
         {
@@ -74,7 +24,7 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
             m_SearchDirectories = searchDirectories;
         }
 
-        public PackageRecord[] Result { get; private set; } = Array.Empty<PackageRecord>();
+        public PackageJsonInfo[] Result { get; private set; } = Array.Empty<PackageJsonInfo>();
         
         protected override void StartRequest()
         {
@@ -84,7 +34,7 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
                 return;
             }
 
-            m_OutputRecords = new ConcurrentBag<PackageRecord>();
+            m_OutputRecords = new ConcurrentBag<PackageJsonInfo>();
             m_CandidatePackageFiles = new ConcurrentBag<FileInfo>();
             
             m_CancellationTokenSource = new CancellationTokenSource();
@@ -134,7 +84,7 @@ namespace Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests
                     return;
             }
             
-            PackageRecord output =  PackageRecord.ReadFromFile(packageFile);
+            PackageJsonInfo output =  PackageJsonInfo.ReadFromFile(packageFile);
             if (output == null)
                 return;
             

@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
-namespace WhiteSparrow.PackageRepoEditor
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
 	public abstract class AbstractRequest
 	{

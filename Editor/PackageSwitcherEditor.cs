@@ -1,25 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Plugins.WhiteSparrow.Shared_PackageRepoEditor.Editor.Requests;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using WhiteSparrow.PackageRepoEditor.Requests;
 
 namespace WhiteSparrow.PackageRepoEditor
 {
-    public class PackageSwitcherEditor : EditorWindow
+    public class PackageSwitcherEditor : EditorWindow, IHasCustomMenu
     {
+        private static PackageJsonInfo s_CachedSelfPackageJsonInfo;
+        internal static PackageJsonInfo GetPackageRecord()
+        {
+            if (s_CachedSelfPackageJsonInfo == null)
+                s_CachedSelfPackageJsonInfo = PackageJsonInfo.ReadFromAssetGuid("20205c8a0e0625d488b156fc8923da0e");
+
+            return s_CachedSelfPackageJsonInfo;
+        }
+        public static string Version => GetPackageRecord()?.PackageVersion ?? "?.?.??";
+
+        internal static void VisitGitHub()
+        {
+            Application.OpenURL(GetPackageRecord().Homepage);
+        }
+        
         [MenuItem("Tools/White Sparrow/Package Switcher")]
         public static PackageSwitcherEditor ShowWindow()
         {
             PackageSwitcherEditor window = EditorWindow.GetWindow<PackageSwitcherEditor>();
             window.Show();
-            window.FetchPackages(true);
+            window.FetchPackages(false, true);
             window.FindLocalPackages(true);
             return window;
         }
 
+        private const string StyleSheetGuid = "6685295567fa439682a6ad6475e4aacd";
+        
         private PackageSwitcherEditorListContainer m_ManifestPackageContainer;
         private PackageSwitcherEditorListContainer m_LocalPackagesContainer;
 
@@ -35,7 +52,7 @@ namespace WhiteSparrow.PackageRepoEditor
             InitializePaths();
             if (focusedWindow == this)
             {
-                FetchPackages(true);
+                FetchPackages(false, true);
                 FindLocalPackages(true);
             }
             else
@@ -55,13 +72,13 @@ namespace WhiteSparrow.PackageRepoEditor
 
         private void OnItemRequestComplete()
         {
-	        FetchPackages(true);
+	        FetchPackages(false, true);
         }
 
         private void OnFocus()
         {
             if(m_PendingFetchPackagesRequest)
-                FetchPackages(true);
+                FetchPackages(false, true);
             if(m_PendingFindLocalPackagesRequest)
                 FindLocalPackages(true);
         }
@@ -71,10 +88,11 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             m_ManifestPackagesStatusMessage = new PackageSwitcherEditorStatusMessage();
             m_LocalPackagesStatusMessage = new PackageSwitcherEditorStatusMessage();
-            
+
+            string styleSheetAssetPath = AssetDatabase.GUIDToAssetPath(StyleSheetGuid);
             VisualElement root = rootVisualElement;
             root.AddToClassList("package-switcher-window");
-            root.styleSheets.Add(Resources.Load<StyleSheet>("PackageRepoSwitcher/PackageRepoSwitcherStyleSheet"));
+            root.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(styleSheetAssetPath));
 
             ScrollView scroll = new ScrollView();
             root.Add(scroll);
@@ -88,7 +106,7 @@ namespace WhiteSparrow.PackageRepoEditor
             m_RefreshPackages.text = "refresh";
             m_RefreshPackages.clickable.clicked += () =>
             {
-				FetchPackages(true);
+				FetchPackages(true, true);
             };
             m_ManifestPackageContainer.TitleMetadataContainer.Add(m_RefreshPackages);
             container.Add(m_ManifestPackageContainer);
@@ -111,7 +129,7 @@ namespace WhiteSparrow.PackageRepoEditor
 
         private static FetchPackagesRequest m_FetchPackagesRequest;
         private bool m_PendingFetchPackagesRequest = false;
-        private void FetchPackages(bool force = false)
+        private void FetchPackages(bool online, bool force = false)
         {
             m_PendingFetchPackagesRequest = false;
             if (m_FetchPackagesRequest != null)
@@ -129,7 +147,7 @@ namespace WhiteSparrow.PackageRepoEditor
             }
 
             UpdatePackagesDisplay();
-            m_FetchPackagesRequest = new FetchPackagesRequest();
+            m_FetchPackagesRequest = new FetchPackagesRequest(online);
             m_FetchPackagesRequest.OnComplete += OnFetchPackagesRequestComplete;
             m_FetchPackagesRequest.Start();
         }
@@ -138,6 +156,7 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             m_FetchPackagesRequest.OnComplete -= OnFetchPackagesRequestComplete;
             UpdatePackagesDisplay();
+            UpdateDependencies();
         }
 
         private List<PackageInfoSwitcherEditorItem> m_ManifestPackageVisualItems =
@@ -212,6 +231,7 @@ namespace WhiteSparrow.PackageRepoEditor
         {
             m_FindLocalPackagesRequest.OnComplete -= OnFindLocalPackagesRequestComplete;
             UpdateLocalPackagesDisplay();
+            UpdateDependencies();
         }
 
         private List<PackageJsonSwitcherEditorItem> m_LocalPackageVisualItems =
@@ -262,6 +282,30 @@ namespace WhiteSparrow.PackageRepoEditor
             }
 
             UpdateListChildrenClasses();
+        }
+
+        private void UpdateDependencies()
+        {
+            if (m_FindLocalPackagesRequest == null || !m_FindLocalPackagesRequest.IsComplete)
+                return;
+            if (m_FetchPackagesRequest == null || !m_FetchPackagesRequest.IsComplete)
+                return;
+
+            Dictionary<string, PackageInfoSwitcherEditorItem> packageItemsByName =
+                new Dictionary<string, PackageInfoSwitcherEditorItem>();
+            foreach (var item in m_ManifestPackageVisualItems)
+            {
+                packageItemsByName[item.PackageInfo.name] = item;
+            }
+
+
+            foreach (var item in m_LocalPackageVisualItems)
+            {
+                if (!packageItemsByName.TryGetValue(item.PackageJsonInfo.PackageName, out var packageInfoViewItem))
+                    continue;
+                
+                item.SetRelatedPackage(packageInfoViewItem.PackageInfo);
+            }
         }
 
         private void ShowSwitcherSettingsWindow(EventBase obj)
@@ -348,6 +392,10 @@ namespace WhiteSparrow.PackageRepoEditor
             OnRequestComplete?.Invoke();
         }
 
+        public void AddItemsToMenu(GenericMenu menu)
+        {
+            menu.AddItem(EditorGUIUtility.TrTextContent("Package Switcher Settings"), false, () => ShowSwitcherSettingsWindow(null));
+        }
     }
 
     public class PackageSwitcherEditorStatusMessage : VisualElement

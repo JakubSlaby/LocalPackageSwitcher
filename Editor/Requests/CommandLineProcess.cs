@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Text;
-using UnityEngine;
 
-namespace WhiteSparrow.PackageRepoEditor
+namespace WhiteSparrow.PackageRepoEditor.Requests
 {
 	public enum ProcessFile
 	{
