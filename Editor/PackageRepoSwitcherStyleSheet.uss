@@ -100,6 +100,12 @@
 	display: flex;
 }
 
+.package-information-item .meta-data-container .package-path
+{
+	margin-top: 6px;
+}
+
+
 
 .package-information-item .actions-container
 {

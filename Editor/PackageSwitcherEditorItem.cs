@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Text;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UIElements;
 using WhiteSparrow.PackageRepoEditor.Requests;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
@@ -54,11 +56,13 @@ namespace WhiteSparrow.PackageRepoEditor
             this.Add(MetaDataContainer);
             
             PackageName = new Label();
-            PackageDisplayName.AddToClassList("package-name");
+            PackageName.AddToClassList("package-name");
+            PackageName.enableRichText = true;
             MetaDataContainer.Add(PackageName);
             
             PackagePath = new Label();
-            PackageDisplayName.AddToClassList("package-path");
+            PackagePath.AddToClassList("package-path");
+            PackagePath.enableRichText = true;
             MetaDataContainer.Add(PackagePath);
 
             ActionsContainer = new VisualElement();
@@ -93,7 +97,6 @@ namespace WhiteSparrow.PackageRepoEditor
 
         public virtual void UpdateInfo()
         {
-	        
         }
 
         public void SetTag(string tag, bool enabled)
@@ -147,13 +150,22 @@ namespace WhiteSparrow.PackageRepoEditor
             PackageDisplayName.text = packageInfo.displayName;
             PackageVersion.text = packageInfo.version;
             PackageName.text = $"{packageInfo.name}@{packageInfo.version}";
-            PackagePath.text = $"{packageInfo.assetPath}";
+
+            StringBuilder extraInfoBuilder = new StringBuilder();
+            extraInfoBuilder.AppendLine($"asset path: {packageInfo.assetPath}");
+            if (packageInfo.source == PackageSource.Local)
+            {
+                extraInfoBuilder.AppendLine($"absolute path: {packageInfo.resolvedPath}");
+            }
+            PackagePath.text = extraInfoBuilder.ToString().Trim();
+
 
             UpdateInfo();
         }
 
         public override void UpdateInfo()
         {
+            base.UpdateInfo();
 		    SetTag("Local", PackageInfo.source == PackageSource.Local);
 		    SetTag("Git", PackageInfo.source == PackageSource.Git);
         }
@@ -240,7 +252,9 @@ namespace WhiteSparrow.PackageRepoEditor
             PackageDisplayName.text = packageJsonInfo.PackageDisplayName;
             PackageVersion.text = packageJsonInfo.PackageVersion;
             PackageName.text = $"{packageJsonInfo.PackageName}@{packageJsonInfo.PackageVersion}";
-            PackagePath.text = $"{packageJsonInfo.PackageFile}";
+            PackagePath.text = $"{packageJsonInfo.PackageFile.Directory.FullName}";
+            
+            UpdateInfo();
         }
 
         protected override void BuildActionsMenu(GenericMenu menu)
@@ -266,6 +280,7 @@ namespace WhiteSparrow.PackageRepoEditor
         public void SetRelatedPackage(PackageInfo info)
         {
             SetTag("In Use", info.source == PackageSource.Local && info.resolvedPath == PackageJsonInfo.PackageFile.Directory.FullName);
+            UpdateInfo();
         }
     }
 }
